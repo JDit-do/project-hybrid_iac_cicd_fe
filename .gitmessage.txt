@@ -1,0 +1,44 @@
+[type] scope: subject
+# type (커밋 성격)
+# - infra : 인프라 코드 변경 (Terraform, Helm 등)
+# - cicd : 파이프라인, GitHub Actions, 빌드/배포 스크립트
+# - docs : 문서 (README, ADR, runbooks, change-log 등)
+# - exp : 실험 (lab 코드, 실패 포함)
+# - fix : 버그나 오타 수정
+# scope (어디에 대한 변경, 대상)
+# - cluster : EKS 클러스터
+# - nodegroup : 워커 노드그룹
+# - irsa : IAM Role for Service Account
+# - alb-controller : ALB 컨트롤러 관련
+# - docs : 문서 자체 (scope 생략해도 됨)
+# - pipeline : CI/CD 워크플로
+
+### -------------------------------------- ###
+# WHY (optional → 중요한 변경일 때만):
+# - 이 변경을 한 배경 / 이유
+
+### -------------------------------------- ###
+WHAT:
+- 이번 커밋의 핵심 변경 내용
+
+### -------------------------------------- ###
+# HOW (optional):
+# - 간단 검증 결과 (terraform plan, kubectl 확인 등)
+
+### -------------------------------------- ###
+# NOTE (optional):
+# - 추가로 남기고 싶은 메모 / 회고 포인트
+
+
+###### -------------- 예시 -------------- ######
+# [infra] cluster: EKS endpoint private 전환
+# WHY:
+# - 보안 강화를 위해 Public Endpoint 차단
+
+# WHAT:
+# - endpoint_private_access = true
+# - endpoint_public_access = false
+
+# HOW:
+# - terraform plan/apply → 정상
+# - bastion에서 kubectl 접속 확인 완료
