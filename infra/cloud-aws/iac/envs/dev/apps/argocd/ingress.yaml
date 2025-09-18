@@ -1,0 +1,57 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-ingress
+  namespace: argocd
+  annotations:
+    kubernetes.io/ingress.class: alb
+    ## Traffic Listening
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+
+    ## Traffic Routing
+    # kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    # alb.ingress.kubernetes.io/backend-protocol-version: "GRPC" # ArgoCD CLI(grpc)까지 쓰려면 GRPC도 활성화
+
+    ## Access Control
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    # alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0
+
+    ## SSL
+    # prism-memory: 도메인 이슈로 아래 임시 도메인에 arn 적용
+    # justee
+    alb.ingress.kubernetes.io/certificate-arn: <인증서>
+
+    ## Health Check
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
+
+    # (선택) 보안 강화
+    # alb.ingress.kubernetes.io/inbound-cidrs: "1.2.3.4/32"
+    # alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:ap-northeast-2:YOUR_ACCT:regional/webacl/NAME/ID
+
+spec:
+  ingressClassName: alb
+  rules:
+    # - host: argocd.prism-memory.cloud
+    #   http:
+    #     paths:
+    #     - path: /
+    #       pathType: Prefix
+    #       backend:
+    #         service:
+    #           name: argocd-server
+    #           port:
+    #             number: 80
+    # 도메인 이슈로 임시 도메인으로 적용
+    - host: argocd.justee.store
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
