@@ -1,0 +1,38 @@
+controller:
+  image:
+    tag: lts
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+  jenkinsUrl: https://jenkins.justee.store
+  JCasC:
+    enabled: true
+    defaultConfig: true
+    configScripts:
+      base: |
+        jenkins:
+          systemMessage: "Managed by Helm + JCasC (temporary EKS)"
+  serviceType: ClusterIP
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    hostName: jenkins.justee.store
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+      alb.ingress.kubernetes.io/ssl-redirect: "443"
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/certificate-arn: <ACM_CERTIFICATE_ARN>
+
+persistence:
+  enabled: true
+  storageClass: gp3
+  size: 50Gi
+
+agent:
+  enabled: false
+
+

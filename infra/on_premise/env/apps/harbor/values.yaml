@@ -1,0 +1,44 @@
+expose:
+  type: ingress
+  tls:
+    enabled: true
+  ingress:
+    className: alb
+    hosts:
+      core: harbor.justee.store
+      notary: notary.harbor.justee.store
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+      alb.ingress.kubernetes.io/ssl-redirect: "443"
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/certificate-arn: <ACM_CERTIFICATE_ARN>
+
+externalURL: https://harbor.justee.store
+
+harborAdminPassword: "CHANGE_ME"
+
+persistence:
+  persistentVolumeClaim:
+    registry:
+      storageClass: gp3
+      accessMode: ReadWriteOnce
+      size: 200Gi
+    chartmuseum:
+      enabled: false
+  imageChartStorage:
+    type: s3
+    s3:
+      region: ap-northeast-2
+      bucket: <HARBOR_S3_BUCKET_NAME>
+      accesskey: <AWS_ACCESS_KEY_ID>
+      secretkey: <AWS_SECRET_ACCESS_KEY>
+      secure: true
+      v4auth: true
+
+metrics:
+  enabled: true
+
+

@@ -331,6 +331,76 @@ resource "aws_iam_role_policy_attachment" "node_ecr" {
 }
 
 
+
+
+############################################
+# Node SSH Security Group (from Bastion)
+############################################
+# Bastion SG는 이미 data로 조회 중: data.aws_security_group.bastion
+
+resource "aws_security_group" "node_ssh" {
+  name        = "eks-nodes-ssh"
+  description = "Allow SSH from bastion to worker nodes"
+  vpc_id      = data.aws_vpc.vpc.id
+
+  ingress {
+    description     = "SSH from bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [data.aws_security_group.bastion.id] # 소스 = 배스천 SG
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "eks-nodes-ssh" }
+}
+
+
+
+############################################
+# Launch Templates (인스턴스 Name 태그 부여)
+############################################
+# CICD 전용 노드용 LT
+resource "aws_launch_template" "lt_cicd" {
+  name_prefix = "lt-eks-ng-cicd-"
+  # SSH 키
+  key_name = "test_mh_bation_cicd"
+
+  # 보안그룹/서브넷은 NodeGroup이 처리하므로 굳이 지정 안 해도 됨
+  # (필요 시 network_interfaces/security_groups 추가 가능)
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      # 모든 CICD 노드에 동일한 Name (간단/확실)
+      Name = "eks-prod-ng-cicd"
+      # 참고: 필요하면 아래처럼 더 구체화 가능
+      # Name = "eks-${aws_eks_cluster.cluster.name}-ng-cicd"
+    }
+  }
+}
+
+# FE 전용 노드용 LT
+resource "aws_launch_template" "lt_fe" {
+  name_prefix = "lt-eks-ng-fe-"
+  key_name    = "test_mh_bation_cicd"
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "eks-prod-ng-fe"
+    }
+  }
+}
+
+
+
 ############################################
 # Node Group - CICD 전용 (ArgoCD 등)
 ############################################
@@ -357,15 +427,14 @@ resource "aws_eks_node_group" "ng_cicd" {
   }
 
   scaling_config { # memory 이슈 발생으로 1 -> 2로 변경(사양도 변경), t3 - 병렬로 처리와 HA(최소 3개 권장)
-    desired_size = 3
-    min_size     = 3
+    desired_size = 2
+    min_size     = 1
     max_size     = 4
   }
 
-  # 필요 시 SSH 허용(기존 배스천 SG 재사용)
-  remote_access {
-    ec2_ssh_key               = "test_mh_bation_cicd"
-    source_security_group_ids = ["sg-0a9213ae0931a3d04"]
+  launch_template {
+    id      = aws_launch_template.lt_cicd.id
+    version = "$Latest"
   }
 
   depends_on = [
@@ -374,6 +443,12 @@ resource "aws_eks_node_group" "ng_cicd" {
     aws_iam_role_policy_attachment.node_cni,
     aws_iam_role_policy_attachment.node_ecr
   ]
+
+  timeouts {
+    create = "20m"
+    update = "20m"
+    delete = "30m"
+  }
 }
 ############################################
 # Node Group - FE 전용
@@ -397,14 +472,14 @@ resource "aws_eks_node_group" "ng_fe" {
   # }
 
   scaling_config {
-    desired_size = 2
+    desired_size = 1
     min_size     = 1
     max_size     = 4
   }
 
-  remote_access {
-    ec2_ssh_key               = "test_mh_bation_cicd"
-    source_security_group_ids = ["sg-0a9213ae0931a3d04"]
+  launch_template {
+    id      = aws_launch_template.lt_fe.id
+    version = "$Latest"
   }
 
   depends_on = [
@@ -413,6 +488,12 @@ resource "aws_eks_node_group" "ng_fe" {
     aws_iam_role_policy_attachment.node_cni,
     aws_iam_role_policy_attachment.node_ecr
   ]
+
+  timeouts {
+    create = "20m"
+    update = "20m"
+    delete = "30m"
+  }
 }
 
 
@@ -423,6 +504,11 @@ resource "aws_eks_node_group" "ng_fe" {
 resource "aws_eks_addon" "coredns" {
   cluster_name = aws_eks_cluster.cluster.name
   addon_name   = "coredns"
+  timeouts {
+    create = "20m"
+    update = "20m"
+    delete = "20m"
+  }
 }
 resource "aws_eks_addon" "kubeproxy" {
   cluster_name = aws_eks_cluster.cluster.name

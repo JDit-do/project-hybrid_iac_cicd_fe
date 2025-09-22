@@ -1,0 +1,70 @@
+crds:
+  install: true
+
+controller:
+  replicas: 1
+  nodeSelector: { role: argocd }
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: argocd
+      effect: NoSchedule
+  resources:
+    requests: { cpu: "1", memory: "1Gi" }
+  pdb:
+    enabled: true
+    minAvailable: 1
+
+repoServer:
+  replicas: 1
+  nodeSelector: { role: argocd }
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: argocd
+      effect: NoSchedule
+  resources:
+    requests: { cpu: "500m", memory: "1Gi" }
+  pdb:
+    enabled: true
+    minAvailable: 1
+
+server:
+  replicas: 1
+  nodeSelector: { role: argocd }
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: argocd
+      effect: NoSchedule
+  resources:
+    requests: { cpu: "300m", memory: "512Mi" }
+  insecure: true # ALB -> Service(80)  HTTP 통신 허용
+  extraArgs:
+    - --insecure
+  service:
+    type: ClusterIP
+    ports:
+      http: 80
+  ingress:
+    enabled: false # 처음엔 포트포워드로 확인
+  pdb:
+    enabled: true
+    minAvailable: 1
+
+redis:
+  enabled: true
+  nodeSelector: { role: argocd }
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: argocd
+      effect: NoSchedule
+  resources:
+    requests: { cpu: "100m", memory: "128Mi" }
+
+configs:
+  params:
+    admin.enabled: "true" # admin 계정 활성화
+# admin 초기 비번은 랜덤 시크릿을 쓰기 위해 의도적으로 미설정
+

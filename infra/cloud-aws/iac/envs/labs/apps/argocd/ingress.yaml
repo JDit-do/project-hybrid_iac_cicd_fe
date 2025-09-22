@@ -34,18 +34,7 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-    # - host: argocd.prism-memory.cloud
-    #   http:
-    #     paths:
-    #     - path: /
-    #       pathType: Prefix
-    #       backend:
-    #         service:
-    #           name: argocd-server
-    #           port:
-    #             number: 80
-    # 도메인 이슈로 임시 도메인으로 적용
-    - host: argocd.justee.store
+    - host: argocd.prism-memory.cloud
       http:
         paths:
           - path: /
@@ -55,3 +44,15 @@ spec:
                 name: argocd-server
                 port:
                   number: 80
+
+    # 도메인 이슈로 임시 도메인으로 적용
+    # - host: argocd.justee.store
+    #   http:
+    #     paths:
+    #       - path: /
+    #         pathType: Prefix
+    #         backend:
+    #           service:
+    #             name: argocd-server
+    #             port:
+    #               number: 80
